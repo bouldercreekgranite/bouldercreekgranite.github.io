@@ -1,0 +1,189 @@
+// Get values localized.
+const ANALYTIFY_TRACKING_MODE = FORMS_TRACKING_OBJECT.ANALYTIFY_TRACKING_MODE;
+const ANALYTIFY_FORMS_CUSTOM_FORM_CLASS = FORMS_TRACKING_OBJECT.ANALYTIFY_FORMS_CUSTOM_FORM_CLASS;
+const custom_form = FORMS_TRACKING_OBJECT.custom_form;
+const track_cf7 = FORMS_TRACKING_OBJECT.track_cf7;
+const track_wpforms = FORMS_TRACKING_OBJECT.track_wpforms;
+const track_gravityforms = FORMS_TRACKING_OBJECT.track_gravityforms;
+const track_formidable = FORMS_TRACKING_OBJECT.track_formidable;
+const track_ninjaforms = FORMS_TRACKING_OBJECT.track_ninjaforms;
+const track_fluentforms = FORMS_TRACKING_OBJECT.track_fluentforms;
+const property_tracking_mode = FORMS_TRACKING_OBJECT.property_tracking_mode;
+
+jQuery(document).ready(function ($) {
+
+	// simple function that checks if attr is available
+	jQuery.fn.hasAttr = function (name) {
+		return undefined !== this.attr(name);
+	};
+
+	analytify_forms_load(ANALYTIFY_TRACKING_MODE);
+
+	// submission event for custom forms
+	if ('on' === custom_form) {
+
+		// Custom class added in form container.
+		jQuery(`.${ANALYTIFY_FORMS_CUSTOM_FORM_CLASS} form, form.${ANALYTIFY_FORMS_CUSTOM_FORM_CLASS}`).on('submit', function () {
+			custom_form_submission(this);
+		});
+	}
+
+});
+
+function custom_form_submission(thisElement) {
+	let analytify_form_name = (jQuery(thisElement).hasAttr('name')) ? jQuery(thisElement).attr('name') : (jQuery(thisElement).hasAttr('id')) ? (jQuery(thisElement).hasAttr('id')) : 'Custom Form on ' + window.location.href;
+
+	if ('gtag' === ANALYTIFY_TRACKING_MODE) {
+
+		if ('ga4' === property_tracking_mode) {
+			gtag('event', 'analytify_form', {
+				'wpa_link_action': 'submission',
+				'wpa_category': 'analytify_form_custom',
+				'wpa_link_label': analytify_form_name,
+			});
+		} else {
+			gtag('event', 'submission', {
+				'event_category': 'analytify_form_custom',
+				'event_label': analytify_form_name,
+				'value': 0,
+			});
+		}
+
+	} else {
+
+		ga('send', {
+			hitType: 'event',
+			eventCategory: 'analytify_form_custom',
+			eventAction: 'submission',
+			eventLabel: analytify_form_name,
+			eventValue: 0
+		});
+
+	}
+}
+
+// tell Google Analytics that a form has been loaded
+function analytify_forms_check_impression() {
+
+	// loop through all the forms on the page
+	jQuery('form').each(function () {
+
+		// check if parent form has the class 'testing-form'
+
+		if ('on' == custom_form && (jQuery(this).hasClass(ANALYTIFY_FORMS_CUSTOM_FORM_CLASS) || jQuery(this).parents(`.${ANALYTIFY_FORMS_CUSTOM_FORM_CLASS}`).length)) {
+
+			// Custom Form
+			let analytify_form_name = (jQuery(this).hasAttr('name')) ? jQuery(this).attr('name') : (jQuery(this).hasAttr('id')) ? (jQuery(this).hasAttr('id')) : 'Custom Form on ' + window.location.pathname;
+			analytify_forms_send_impression('analytify_form_custom', analytify_form_name);
+
+		} else if ('on' == track_cf7 && jQuery(this).hasClass('wpcf7-form')) {
+
+			// Contact Form 7
+			let analytify_form_id = jQuery(this).find('input[name="_wpcf7"]').length ? jQuery(this).find('input[name="_wpcf7"]').val() : '';
+			analytify_forms_send_impression('analytify_form_wpcf7', analytify_form_id);
+
+		} else if ('on' == track_wpforms && jQuery(this).hasClass('wpforms-form')) {
+
+			// WPForms
+			let analytify_form_id = jQuery(this).hasAttr('data-formid') ? jQuery(this).attr('data-formid') : '';
+			analytify_forms_send_impression('analytify_form_wpforms', analytify_form_id);
+
+		} else if ('on' == track_gravityforms && jQuery(this).parent().hasClass('gform_wrapper')) {
+
+			// Gravity Forms
+			let __analytify_form_id = jQuery(this).hasAttr('id') ? jQuery(this).attr('id').split('_') : '';
+			let analytify_form_id = (undefined !== __analytify_form_id[1]) ? __analytify_form_id[1] : '';
+			analytify_forms_send_impression('analytify_form_gf', analytify_form_id);
+
+		} else if ('on' == track_formidable && jQuery(this).hasClass('frm-show-form')) {
+
+			// Formidable Forms
+			let analytify_form_id = (jQuery(this).find('input[name="form_id"]').length) ? jQuery(this).find('input[name="form_id"]').val() : '';
+			analytify_forms_send_impression('analytify_form_formidable', analytify_form_id);
+
+		} else if ('on' == track_fluentforms && jQuery(this).hasClass('frm-fluent-form')) {
+
+			// Fluent Forms
+			let analytify_form_id = jQuery(this).hasAttr('data-form_id') ? jQuery(this).attr('data-form_id') : '';
+			analytify_forms_send_impression('analytify_form_fluentforms', analytify_form_id);
+
+		} else if ('on' == track_fluentforms && jQuery(this).hasClass('frm-fluent-form')) {
+
+			// Fluent Forms
+			let analytify_form_id = jQuery(this).hasAttr('data-form_id') ? jQuery(this).attr('data-form_id') : '';
+			analytify_forms_send_impression('analytify_form_fluentforms', analytify_form_id);
+
+		}
+
+	});
+
+}
+
+function analytify_forms_send_impression(category, id) {
+
+	if ('gtag' === ANALYTIFY_TRACKING_MODE) {
+
+		if ("ga4" === property_tracking_mode) {
+			gtag('event', 'analytify_form', {
+				'wpa_link_action': 'impression',
+				'wpa_category': category,
+				'wpa_link_label': id.toString(),
+			});
+		} else {
+			gtag('event', 'impression', {
+				'event_category': category,
+				'event_label': id.toString(),
+				'value': 1,
+			});
+		}
+
+	} else {
+
+		ga('send', {
+			hitType: 'event',
+			eventCategory: category,
+			eventAction: 'impression',
+			eventLabel: id.toString(),
+			eventValue: 1,
+			nonInteraction: 1
+		});
+	}
+
+}
+
+if ('on' === track_ninjaforms) {
+	// check impression for Ninja Forms
+	if (window.jQuery) {
+		jQuery(document).on('nfFormReady', function (e, layoutView) {
+			let njform_label = layoutView.el.split('-');
+			analytify_forms_send_impression('analytify_form_ninja_forms', njform_label[2]);
+		});
+	}
+}
+
+/**
+ * Recursive method perform check if tracking code is loaded.
+ * Wrapper for analytify_forms_check_impression.
+ * 
+ * @param string trackingMode The current tracking script used.
+ * @return void
+ */
+function analytify_forms_load(trackingMode) {
+	var repeat = true;
+
+	if ('gtag' === trackingMode) {
+		if ('undefined' !== typeof (gtag) && gtag) {
+			repeat = false;
+		}
+	} else {
+		if ('undefined' !== typeof (ga) && ga && ga.hasOwnProperty("loaded") && ga.loaded == true) {
+			repeat = false;
+		}
+	}
+
+	if (repeat) {
+		setTimeout(analytify_forms_load, 200);
+	} else {
+		analytify_forms_check_impression();
+	}
+}
